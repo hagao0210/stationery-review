@@ -1,24 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
+  <meta charset="UTF-8">
   <title>文房具レビュー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2c2c3f);
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    input[type="number"] {
+      appearance: textfield;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffd700, #ffb400);
+      color: #000;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+    }
+
+    h2 {
+      margin-top: 30px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 10px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: rgba(255,255,255,0.08);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .item-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stars {
+      color: #ffd700;
+      margin-bottom: 5px;
+    }
+
+    .comment {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 <body>
-  <h1>文房具レビューサイト</h1>
+  <div class="container">
+    <h1>文房具レビューサイト</h1>
 
-  <input id="name" placeholder="商品名">
-  <input id="rating" type="number" min="1" max="5" placeholder="星1-5">
-  <input id="comment" placeholder="コメント">
-  <button onclick="addReview()">投稿</button>
+    <div class="form-group">
+      <input id="name" placeholder="商品名">
+    </div>
 
-  <h2>レビュー一覧</h2>
-  <ul id="list"></ul>
+    <div class="form-group">
+      <input id="rating" type="number" min="1" max="5" placeholder="星1-5">
+    </div>
+
+    <div class="form-group">
+      <input id="comment" placeholder="コメント">
+    </div>
+
+    <button onclick="addReview()">投稿する</button>
+
+    <h2>レビュー一覧</h2>
+    <ul id="list"></ul>
+  </div>
 
 <script>
 async function addReview() {
-  const name = document.getElementById("name").value;
+  const name = document.getElementById("name").value.trim();
   const rating = document.getElementById("rating").value;
-  const comment = document.getElementById("comment").value;
+  const comment = document.getElementById("comment").value.trim();
+
+  if (!name || !rating || !comment) {
+    alert("すべて入力してください");
+    return;
+  }
 
   await fetch("/reviews", {
     method: "POST",
@@ -26,21 +140,37 @@ async function addReview() {
     body: JSON.stringify({ name, rating, comment })
   });
 
+  document.getElementById("name").value = "";
+  document.getElementById("rating").value = "";
+  document.getElementById("comment").value = "";
+
   loadReviews();
 }
 
 async function loadReviews() {
-  const res = await fetch("/reviews");
-  const reviews = await res.json();
+  try {
+    const res = await fetch("/reviews");
+    const reviews = await res.json();
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+    const list = document.getElementById("list");
+    list.innerHTML = "";
 
-  reviews.forEach(r => {
-    const li = document.createElement("li");
-    li.textContent = `${r.name} ⭐${r.rating} - ${r.comment}`;
-    list.appendChild(li);
-  });
+    reviews.forEach(r => {
+      const li = document.createElement("li");
+
+      const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+
+      li.innerHTML = `
+        <div class="item-name">${r.name}</div>
+        <div class="stars">${stars}</div>
+        <div class="comment">${r.comment}</div>
+      `;
+
+      list.appendChild(li);
+    });
+  } catch (error) {
+    console.log("レビュー取得エラー:", error);
+  }
 }
 
 loadReviews();
